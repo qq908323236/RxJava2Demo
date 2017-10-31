@@ -154,9 +154,16 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void subscribe(ObservableEmitter<Integer> emitter) throws Exception {
                 //发送4个事件
+                Log.d(TAG, "emit 1");
                 emitter.onNext(1);
+
+                Log.d(TAG, "emit 2");
                 emitter.onNext(2);
+
+                Log.d(TAG, "emit 3");
                 emitter.onNext(3);
+
+                Log.d(TAG, "emit complete");
                 emitter.onComplete();
             }
         });
@@ -166,23 +173,24 @@ public class MainActivity extends AppCompatActivity {
             //当调用d.dispose()，会使下游收不到事件,但上游还是会继续发送事件的
             @Override
             public void onSubscribe(Disposable d) {
-                Log.d(TAG, "onSubscribe: ");
+                //先执行这个回调，才开始发送事件
+                Log.i(TAG, "onSubscribe: ");
 
             }
 
             @Override
             public void onNext(Integer integer) {
-                Log.d(TAG, "onNext: " + integer);
+                Log.i(TAG, "onNext: " + integer);
             }
 
             @Override
             public void onError(Throwable e) {
-                Log.d(TAG, "onError: ");
+                Log.e(TAG, "onError: ");
             }
 
             @Override
             public void onComplete() {
-                Log.d(TAG, "onComplete: ");
+                Log.i(TAG, "onComplete: ");
             }
         };
         //建立连接,并且上游开始发送事件
@@ -193,21 +201,22 @@ public class MainActivity extends AppCompatActivity {
      * 线程控制
      */
     private void method2() {
+        //创建一个observable(被观察者)
         Observable<Integer> observable = Observable.create(new ObservableOnSubscribe<Integer>() {
             @Override
             public void subscribe(ObservableEmitter<Integer> emitter) throws Exception {
-                Log.d(TAG, "Observable thread is : " + Thread.currentThread().getName());
+                Log.d(TAG, "上游的线程是: " + Thread.currentThread().getName());
                 Log.d(TAG, "emit 1");
                 emitter.onNext(1);
             }
         });
 
-        //只需要onNext的observer
+        //创建一个只实现了onNext的observer(观察者)
         Consumer<Integer> consumer = new Consumer<Integer>() {
             @Override
             public void accept(Integer integer) throws Exception {
-                Log.d(TAG, "Observer thread is :" + Thread.currentThread().getName());
-                Log.d(TAG, "onNext: " + integer);
+                Log.i(TAG, "下游的线程是 :" + Thread.currentThread().getName());
+                Log.i(TAG, "onNext: " + integer);
             }
         };
 
@@ -244,24 +253,23 @@ public class MainActivity extends AppCompatActivity {
                 .subscribe(new Observer<User>() {             //建立连接
                     @Override
                     public void onSubscribe(Disposable d) {
-                        Log.d(TAG, "onSubscribe: ");
+                        Log.i(TAG, "onSubscribe: ");
                     }
 
                     @Override
                     public void onNext(User user) {
-                        Log.d(TAG, "onNext: ");
+                        Log.i(TAG, "onNext: ");
                         Log.i(TAG, "User:" + user.toString());
                     }
 
                     @Override
                     public void onError(Throwable e) {
-                        Log.d(TAG, "onError: ");
-                        e.printStackTrace();
+                        Log.e(TAG, "onError: ", e);
                     }
 
                     @Override
                     public void onComplete() {
-                        Log.d(TAG, "onComplete: ");
+                        Log.i(TAG, "onComplete: ");
                     }
                 });
     }
@@ -274,8 +282,13 @@ public class MainActivity extends AppCompatActivity {
         Observable.create(new ObservableOnSubscribe<Integer>() {
             @Override
             public void subscribe(ObservableEmitter<Integer> emitter) throws Exception {
+                Log.d(TAG, "emit 1");
                 emitter.onNext(1);
+
+                Log.d(TAG, "emit 2");
                 emitter.onNext(2);
+
+                Log.d(TAG, "emit 3");
                 emitter.onNext(3);
             }
         }).map(new Function<Integer, String>() {
@@ -288,7 +301,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void accept(String s) throws Exception {
                 //这里接收到的就是String类型了
-                Log.d(TAG, "accept: " + s);
+                Log.i(TAG, "accept: " + s);
             }
         });
     }
@@ -298,7 +311,7 @@ public class MainActivity extends AppCompatActivity {
      * FlatMap将一个发送事件的上游Observable变换为多个发送事件的Observables，
      * 然后将它们发射的事件合并后放进一个单独的Observable里.
      * 这里需要注意的是, flatMap并不保证事件的顺序, 并不是事件1就在事件2的前面.
-     * 如果需要保证顺序则需要使用concatMap
+     * 如果需要保证顺序则需要使用concatMap,把里面的flatMap改成concatMap,就是有序的了
      * <p>
      * 这里的例子是：
      * 我们在flatMap中将上游发来的每个事件转换为一个新的发送三个String事件的水管,
@@ -309,8 +322,13 @@ public class MainActivity extends AppCompatActivity {
         Observable.create(new ObservableOnSubscribe<Integer>() {
             @Override
             public void subscribe(ObservableEmitter<Integer> emitter) throws Exception {
+                Log.d(TAG, "emit 1");
                 emitter.onNext(1);
+
+                Log.d(TAG, "emit 2");
                 emitter.onNext(2);
+
+                Log.d(TAG, "emit 3");
                 emitter.onNext(3);
             }
         }).flatMap(new Function<Integer, ObservableSource<String>>() {
@@ -326,7 +344,7 @@ public class MainActivity extends AppCompatActivity {
         }).subscribe(new Consumer<String>() {
             @Override
             public void accept(String s) throws Exception {
-                Log.d(TAG, "accept: " + s);
+                Log.i(TAG, "accept: " + s);
             }
         });
     }
